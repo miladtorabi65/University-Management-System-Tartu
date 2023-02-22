@@ -67,7 +67,7 @@ def student_win():
    right_frame.place(x=350, y=30, height=715, width=650)
 
    # Create a bachground of Tartu
-   bg = PhotoImage(file="t1.png")
+   bg = PhotoImage(file="student_landing.png")
    canvas1 = Canvas(left_frame, width=430, height=1000)
    canvas1.place(x=0, y=0)
    canvas1.create_image(0, 0, image=bg, anchor="nw")
@@ -221,7 +221,7 @@ def teacher_win():
    right_frame.place(x=350, y=30, height=715, width=650)
 
    # Create a bachground of Tartu for teacher form
-   bg = PhotoImage(file="tttttt.png")
+   bg = PhotoImage(file="teacher_landing.png")
    canvas1 = Canvas(left_frame, width=430, height=1000)
    canvas1.place(x=0, y=0)
    canvas1.create_image(0, 0, image=bg, anchor="nw")
@@ -380,7 +380,7 @@ def subject_win():
    right_frame_down.place(x=400, y=310, height=449, width=600)
 
    # Create a bachground of Tartu
-   sbg = PhotoImage(file="sub_t.png")
+   sbg = PhotoImage(file="subject_landing.png")
    canvas2 = Canvas(left_frame, width=400, height=1000)
    canvas2.place(x=0, y=0)
    canvas2.create_image(0, 0, image=sbg, anchor="nw")
@@ -566,7 +566,7 @@ def subject_student_win():
    stscore=StringVar()
 
    # Create a bachground of Tartu
-   sbg = PhotoImage(file="p3.png")
+   sbg = PhotoImage(file="subject_student_landing.png")
    canvas2 = Canvas(subjectui, width=1000, height=750)
    canvas2.place(x=0, y=25)
    canvas2.create_image(0, 0, image=sbg, anchor="nw")
@@ -838,7 +838,7 @@ def report_win():
    studentidfortranscript = StringVar()
 
    # Create a bachground of Tartu
-   bg = PhotoImage(file="image1.png")
+   bg = PhotoImage(file="report_landing.png")
    canvas1 = Canvas(reportui, width=1000, height=1000)
    canvas1.place(x=0, y=0)
    canvas1.create_image(0, 0, image=bg, anchor="nw")
@@ -986,7 +986,7 @@ def About_Milad_Torabi():
     aboutmildatorabiui.geometry('1100x750')
     aboutmildatorabiui.resizable(0, 0)
     # Create Milad Torabi CV
-    bg = PhotoImage(file="MiladTorabi.png")
+    bg = PhotoImage(file="MiladTorabi_about_landing.png")
     canvas1 = Canvas(aboutmildatorabiui, width=1100, height=750)
     canvas1.place(x=0, y=0)
     canvas1.create_image(0, 0, image=bg, anchor="nw")
