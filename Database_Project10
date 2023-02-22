@@ -1,0 +1,32 @@
+#this is the database of admission office program in sqlite
+import sqlite3
+
+connection = sqlite3.Connection("projectdatabase.db")
+cursor = connection.cursor()
+cursor.executescript('''
+DROP TABLE IF EXISTS student;
+DROP TABLE IF EXISTS teacher;
+DROP TABLE IF EXISTS subject;
+DROP TABLE IF EXISTS subject_student;
+
+CREATE TABLE student (
+    st_id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    st_name   TEXT ,st_family TEXT, st_EMAIL TEXT, st_GENDER TEXT, st_DOB TEXT
+);
+
+CREATE TABLE teacher (
+    t_id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    t_name  TEXT ,t_family TEXT ,t_EMAIL TEXT,t_GENDER TEXT,t_DOB TEXT
+);
+CREATE TABLE subject (
+    sj_id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    sj_name TEXT ,
+    ects_scale INTEGER,
+    t_id INTEGER, semester_year TEXT);
+
+CREATE TABLE subject_student (
+    stsj_id     INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT UNIQUE,
+    s_id INTEGER,
+    subj_id INTEGER, score INTEGER);
+
+''')
