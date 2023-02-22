@@ -1,0 +1,165 @@
+#here is the back of the admission office program coded in python
+
+import sqlite3
+connection = sqlite3.Connection("projectdatabase.db")
+cursor = connection.cursor()
+
+class student:
+    def __init__(self,st_name,st_family,st_EMAIL,st_GENDER,st_DOB):
+        self.st_name=st_name
+        self.st_family=st_family
+        self.st_EMAIL=st_EMAIL
+        self.st_GENDER=st_GENDER
+        self.st_DOB=st_DOB
+        self.s_score=[]
+        self.subjects=[]
+
+    @staticmethod
+    def showstudent():
+        cursor.execute("select * from student ")
+        s11 = cursor.fetchall()
+        return s11
+
+    @staticmethod
+    def listofstudentid():
+        cursor.execute("select st_id from student")
+        s1 = cursor.fetchall()
+        l = []
+        for i in range(len(s1)):
+            l.append(s1[i][0])
+        return l
+
+    @staticmethod
+    def showstudentinfo2(sid):
+        cursor.execute("select st_name,st_family from student where st_id=?",(sid,))
+        s11 =cursor.fetchall()
+        return s11
+
+    def student_register(self,n,f,e,g,b):
+        cursor.execute('''INSERT INTO student(st_name,st_family,st_EMAIL,st_GENDER,st_DOB) VALUES (?,?,?,?,?)''',(n,f,e,g,b))
+        connection.commit()
+
+class teacher:
+    def __init__(self,t_name,t_family,t_EMAIL,t_GENDER,t_DOB):
+        self.t_name=t_name
+        self.t_family=t_family
+        self.t_EMAIL=t_EMAIL
+        self.t_GENDER=t_GENDER
+        self.t_DOB=t_DOB
+
+
+    @staticmethod
+    def showteacher():
+        cursor.execute("select * from teacher ")
+        t11 = cursor.fetchall()
+        return t11
+
+    @staticmethod
+    def listofteacherid():
+        cursor.execute("select t_id from teacher")
+        t1 = cursor.fetchall()
+        l = []
+        for i in range(len(t1)):
+            l.append(t1[i][0])
+        return l
+
+    def teacher_register(self,n,f,e,g,b):
+        cursor.execute('''INSERT INTO teacher(t_name,t_family,t_EMAIL,t_GENDER,t_DOB) VALUES (?,?,?,?,?)''', (n, f,e,g,b))
+        connection.commit()
+
+
+class subject:
+    def __init__(self,sj_name,ects_scale,t_id,semester_year):
+        self.sj_name = sj_name
+        self.ects_scale = ects_scale
+        self.teacher1=t_id
+        self.semester_year=semester_year
+
+    def show(self):
+        return(self.sj_name,self.ects_scale,self.teacher1,self.semester_year)
+
+    @staticmethod
+    def listofsubjectid():
+        cursor.execute("select sj_id from subject")
+        sj1 = cursor.fetchall()
+        l = []
+        for i in range(len(sj1)):
+            l.append(sj1[i][0])
+        return l
+
+    @staticmethod
+    def showsubjectinfo():
+        cursor.execute(
+            '''SELECT sj_id, sj_name, ects_scale, semester_year,teacher.t_id, t_name,t_family FROM teacher INNER JOIN subject ON subject.t_id = teacher.t_id''')
+        s = cursor.fetchall()
+        return s
+
+    @staticmethod
+    def showsubject_teacherinfo(subjectid):
+        cursor.execute(
+            '''SELECT sj_name, t_name,t_family FROM teacher INNER JOIN subject ON subject.t_id = teacher.t_id where sj_id=? ''',(subjectid,))
+        s = cursor.fetchall()
+        return s
+
+    def subject_offerer(self,n,s,tid,semester_year):
+        cursor.execute('''INSERT INTO subject(sj_name,ects_scale,t_id,semester_year) VALUES (?,?,?,?)''', (n,s,tid,semester_year))
+        connection.commit()
+
+
+
+class subject_student:
+    def __init__(self,s_id,subj_id,score):
+        self.s_id=s_id
+        self.subj_id=subj_id
+        self.score=score
+
+    def showsubject_student(self):
+        return self.s_id, self.subj_id ,self.score
+
+    def takecourse(self,sid,sjid):
+        cursor.execute('''INSERT INTO subject_student(s_id,subj_id,score) VALUES (?,?,?)''',
+                       (sid, sjid,"not given",))
+        connection.commit()
+
+    @staticmethod
+    def show_student_of_subject_score(subjectid):
+        cursor.execute('''SELECT st_id, st_name,st_family FROM student 
+                INNER JOIN subject_student ON student.st_id = subject_student.s_id where subj_id=? ''',(subjectid,))
+        s2 = cursor.fetchall()
+        return s2
+
+    @staticmethod
+    def savemark(sid,sjid,final_score_):
+        cursor.execute('''SELECT stsj_id FROM subject_student where (s_id,subj_id)=(?,?) ''',
+                       (sid,sjid,))
+        stsj_idinput = cursor.fetchall()
+        stsj_idinput1=stsj_idinput[0][0]
+        cursor.execute('''Update subject_student set score = ?  where stsj_id= ? ''',
+                       (final_score_,stsj_idinput1,))
+        connection.commit()
+
+    @staticmethod
+    def showsubject_studentinfo():
+        cursor.execute('''SELECT stsj_id, st_name,st_family, semester_year, sj_name,score, ects_scale,t_name,t_family FROM student 
+            INNER JOIN subject_student ON student.st_id = subject_student.s_id INNER JOIN subject ON subject.sj_id = subject_student.subj_id 
+            INNER JOIN teacher ON  teacher.t_id = subject.t_id ''')
+        s2 = cursor.fetchall()
+        return s2
+
+    @staticmethod
+    def showsubject_student_thesameclass(subjectid):
+        cursor.execute('''SELECT st_id, st_name,st_family, semester_year, sj_name,score, ects_scale,t_name,t_family FROM student 
+                INNER JOIN subject_student ON student.st_id = subject_student.s_id INNER JOIN subject ON subject.sj_id = subject_student.subj_id 
+                INNER JOIN teacher ON  teacher.t_id = subject.t_id where subj_id=? ''',(subjectid,))
+        s2 = cursor.fetchall()
+        return s2
+
+
+    @staticmethod
+    def showsubject_student_transcript(studentid):
+        cursor.execute('''SELECT st_id, st_name,st_family, semester_year, sj_name,score, ects_scale,t_name,t_family FROM student 
+                INNER JOIN subject_student ON student.st_id = subject_student.s_id INNER JOIN subject ON subject.sj_id = subject_student.subj_id 
+                INNER JOIN teacher ON  teacher.t_id = subject.t_id where s_id=? ''',(studentid,))
+        s2 = cursor.fetchall()
+        return s2
+
