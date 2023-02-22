@@ -1,0 +1,1005 @@
+# here is the front of my program coded in python tkinter 
+
+from tkinter import *
+from tkinter import ttk
+import tkinter as tk
+from prooject import *
+from tkinter import font
+from PIL import Image, ImageTk
+import datetime
+import tkinter.messagebox as mb
+from tkcalendar import DateEntry
+import sqlite3
+import pandas as pd
+import openpyxl
+
+def text_checker(text):
+    a=text[:1]
+    if a.isnumeric() == True or a==" " or a=="":
+        None
+    else:
+        text=text.rstrip().capitalize()
+        return text
+
+#Create an instance of tkinter frame or window
+tatrtu_win= Tk()
+tatrtu_win.title("Admission Office")
+
+# Create a bachground of Tartu
+bg = PhotoImage(file = "UOFT.png")
+canvas1 = Canvas( tatrtu_win, width = 900,height = 700)
+canvas1.place(x=0,y=0)
+canvas1.create_image( 0, 0, image = bg,anchor = "nw")
+tatrtu_win.geometry("900x640")
+
+
+#Define desired methods to open new windows
+def student_win():
+   studentui= Toplevel(tatrtu_win)
+   # Initializing the GUI window for student form of TARTU
+   studentui.title('Student Registering')
+   studentui.geometry('1000x750')
+   studentui.resizable(0, 0)
+
+   # Creating the variables
+   headlabelfont = ("Calibri", 15, 'bold')
+   labelfont = ('Calibri', 14)
+   entryfont = ('Calibri', 14)
+
+   # Connecting to the Database where all information will be stored
+   connector = sqlite3.connect('projectdatabase.db')
+   cursor = connector.cursor()
+
+   # Creating the background and foreground color variables that goes well with Tartu color box
+   lf_bg = 'SteelBlue'
+
+   # Creating the StringVar variables
+   global stname1,stfamily1,stemail1,stgender1
+   stname1 = StringVar()
+   stfamily1 = StringVar()
+   stemail1 = StringVar()
+   stgender1 = StringVar()
+   # Placing the components in the main window
+   Label(studentui, text="TARTU STUDENT OFFICE", font='Arial', bg='SkyBlue').pack(side=TOP, fill=X)
+   left_frame = Frame(studentui, bg=lf_bg)
+   left_frame.place(x=0, y=30, height=720, width=350)
+   right_frame = Frame(studentui, bg="gray")
+   right_frame.place(x=350, y=30, height=715, width=650)
+
+   # Create a bachground of Tartu
+   bg = PhotoImage(file="t1.png")
+   canvas1 = Canvas(left_frame, width=430, height=1000)
+   canvas1.place(x=0, y=0)
+   canvas1.create_image(0, 0, image=bg, anchor="nw")
+
+   # function to display records of TARTU students
+   def display_records():
+       sttree.delete(*sttree.get_children())
+       c = connector.execute('SELECT * FROM student')
+       data = c.fetchall()
+       for records in data:
+           sttree.insert('', END, values=records)
+
+   # Create the reset function
+   def reset_fields():
+       global stname1, stfamily1, stemail1, stgender1, dob
+       for i in ['stname1', 'stfamily1', 'stemail1', 'stgender1']:
+           exec(f"{i}.set('')")
+       dob.set_date(datetime.datetime.now().date())
+
+   def reset_form():
+       global sttree
+       sttree.delete(*sttree.get_children())
+       reset_fields()
+
+   # Function to remove student
+   def remove_record():
+       if not sttree.selection():
+           mb.showerror('Error!', 'Please select an item from the database')
+       else:
+           current_item = sttree.focus()
+           values = sttree.item(current_item)
+           selection = values["values"]
+           sttree.delete(current_item)
+           connector.execute('DELETE FROM student WHERE st_id=%d' % selection[0])
+           connector.commit()
+           mb.showinfo('Done', 'The record is deleted successfully.')
+           display_records()
+
+   # Placing components in the left frame of Tartu Student form
+   tk.Label(left_frame, text="Name", bg='white', width=15).place(x=40, y=390)
+   tk.Label(left_frame, text="Family", bg='white', width=15).place(x=40, y=425)
+   tk.Label(left_frame, text="Email", bg='white', width=15).place(x=40, y=460)
+   tk.Label(left_frame, text="Gender", bg='white', width=15).place(x=40, y=495)
+   tk.Label(left_frame, text="Date of Birth(DOB)", bg='white', width=15).place(x=40, y=530)
+   # Placing Entry components of Tartu Student form
+   e1 = tk.Entry(left_frame, width=21, textvariable=stname1)
+   e1.place(x=180, y=390)
+   e2 = tk.Entry(left_frame, width=21, textvariable=stfamily1)
+   e2.place(x=180, y=425)
+   e3 = tk.Entry(left_frame, width=21, textvariable=stemail1)
+   e3.place(x=180, y=460)
+   OptionMenu(left_frame, stgender1, 'Male', "Female","Other").place(x=180, y=495, width=130, height=23)
+   global  dob
+   dob = DateEntry(left_frame, font=("Arial", 13), width=11)
+   dob.place(x=180, y=530)
+
+   # Function to add TARTU students
+   def save_student():
+       global stname, stfamily, stemail, stgender, stDOB
+       stname = stname1.get()
+       stfamily = stfamily1.get()
+       stemail = stemail1.get()
+       stgender = stgender1.get()
+       stDOB = dob.get_date()
+       a = stname[:1]
+       b = stfamily[:1]
+       if not stname or not stfamily or not stemail or not stgender or not stDOB:
+           mb.showerror('Error!', "Please enter all the details!")
+
+       elif a.isnumeric() == True or a == " " or b.isnumeric() == True or b == " ":
+           mb.showerror('Error!',
+                        "Please enter valid Name and Family!\n inserted Name and Family should not start with space or number")
+       else:
+           try:
+               stname = stname.rstrip().capitalize()
+               stfamily = stfamily.rstrip().capitalize()
+               s1 = student(stname, stfamily, stemail, stgender, stDOB)
+               s1.student_register(stname, stfamily, stemail, stgender, stDOB)
+               mb.showinfo('Record inserted', f"Record of {stname} is added")
+               reset_fields()
+               display_records()
+           except:
+               mb.showerror('Wrong type', 'The name and family should start with string')
+
+   # Place the buttons in the left frame of Tartu Student form
+   ttk.Button(left_frame, text='Delete Record', command=remove_record, width=18).place(x=30, y=650)
+   ttk.Button(left_frame, text='Clear Fields', command=reset_fields, width=18).place(x=30, y=610)
+   ttk.Button(left_frame, text='View Record', command=display_records, width=18).place(x=190, y=610)
+   ttk.Button(left_frame, text='Clear Record', command=reset_form, width=18).place(x=190, y=650)
+   ttk.Button(left_frame, text='Submit and Add Record', command=save_student, width=25).place(x=90, y=570)
+   ttk.Button(left_frame,text='Exit', command=studentui.destroy,width=18).place(x=110, y=685)
+   # Placing components in the right frameof Tartu Student form
+   Label(right_frame, text='Students Records', font='Arial', bg='DarkBlue', fg='LightCyan').pack(side=TOP, fill=X)
+   global sttree
+   sttree = ttk.Treeview(right_frame, height=100, selectmode=BROWSE,
+                       columns=('Stud ID', "Name", "Family", "Email Addr", "Gender", "Date of Birth"))
+
+   X_scroller = Scrollbar(sttree, orient=HORIZONTAL, command=sttree.xview)
+   Y_scroller = Scrollbar(sttree, orient=VERTICAL, command=sttree.yview)
+   X_scroller.pack(side=BOTTOM, fill=X)
+   Y_scroller.pack(side=RIGHT, fill=Y)
+   sttree.config(yscrollcommand=Y_scroller.set, xscrollcommand=X_scroller.set)
+
+   sttree.heading('Stud ID', text='ID', anchor=CENTER)
+   sttree.heading('Name', text='Name', anchor=CENTER)
+   sttree.heading('Family', text='Family', anchor=CENTER)
+   sttree.heading('Email Addr', text='Email Addr', anchor=CENTER)
+   sttree.heading('Gender', text='Gender', anchor=CENTER)
+   sttree.heading('Date of Birth', text='DOB', anchor=CENTER)
+   sttree.column('#0', width=0, stretch=NO)
+   sttree.column('#1', width=40, stretch=NO)
+   sttree.column('#2', width=120, stretch=NO)
+   sttree.column('#3', width=180, stretch=NO)
+   sttree.column('#4', width=200, stretch=NO)
+   sttree.column('#5', width=70, stretch=NO)
+   sttree.column('#6', width=80, stretch=NO)
+   sttree.place(y=30, relwidth=1, relheight=0.956, relx=0)
+   studentui.update()
+   studentui.mainloop()
+
+def teacher_win():
+   teacherui= Toplevel(tatrtu_win)
+   # Initializing the GUI window for student form of TARTU
+   teacherui.title('Teacher Registering')
+   teacherui.geometry('1000x750')
+   teacherui.resizable(0, 0)
+
+   # Creating the variables
+   headlabelfont = ("Calibri", 15, 'bold')
+   labelfont = ('Calibri', 14)
+   entryfont = ('Calibri', 14)
+
+   # Connecting to the Database where all information will be stored
+   connector = sqlite3.connect('projectdatabase.db')
+   cursor = connector.cursor()
+
+   # Creating the background and foreground color variables that goes well with Tartu color box
+   lf_bg = 'SteelBlue'
+
+   # Creating the StringVar variables for teacher form
+   global tname1,tfamily1,temail1,tgender1
+   tname1 = StringVar()
+   tfamily1 = StringVar()
+   temail1 = StringVar()
+   tgender1 = StringVar()
+   # Placing the components in the main window for teacher form
+   Label(teacherui, text="TARTU TEACHER OFFICE", font='Arial', bg='SkyBlue').pack(side=TOP, fill=X)
+   left_frame = Frame(teacherui, bg=lf_bg)
+   left_frame.place(x=0, y=30, height=720, width=350)
+   right_frame = Frame(teacherui, bg="gray")
+   right_frame.place(x=350, y=30, height=715, width=650)
+
+   # Create a bachground of Tartu for teacher form
+   bg = PhotoImage(file="tttttt.png")
+   canvas1 = Canvas(left_frame, width=430, height=1000)
+   canvas1.place(x=0, y=0)
+   canvas1.create_image(0, 0, image=bg, anchor="nw")
+
+   # function to display records of TARTU teachers
+   def display_records():
+       ttree.delete(*ttree.get_children())
+       c = connector.execute('SELECT * FROM teacher')
+       data = c.fetchall()
+       for records in data:
+           ttree.insert('', END, values=records)
+
+   # Create the reset function for teacher form
+   def reset_fields():
+       global tname1, tfamily1, temail1, tgender1, tdob
+       for i in ['tname1', 'tfamily1', 'temail1', 'tgender1']:
+           exec(f"{i}.set('')")
+       tdob.set_date(datetime.datetime.now().date())
+
+   def reset_form():
+       global ttree
+       ttree.delete(*ttree.get_children())
+       reset_fields()
+
+   # Function to remove teacher
+   def remove_record():
+       if not ttree.selection():
+           mb.showerror('Error!', 'Please select an item from the database')
+       else:
+           current_item = ttree.focus()
+           values = ttree.item(current_item)
+           selection = values["values"]
+           ttree.delete(current_item)
+           connector.execute('DELETE FROM teacher WHERE t_id=%d' % selection[0])
+           connector.commit()
+           mb.showinfo('Done', 'The record is deleted successfully.')
+           display_records()
+
+   # Placing components in the left frame of Tartu teacher form
+   tk.Label(left_frame, text="Name", bg='SkyBlue', width=15).place(x=40, y=390)
+   tk.Label(left_frame, text="Family", bg='SkyBlue', width=15).place(x=40, y=425)
+   tk.Label(left_frame, text="Email", bg='SkyBlue', width=15).place(x=40, y=460)
+   tk.Label(left_frame, text="Gender", bg='SkyBlue', width=15).place(x=40, y=495)
+   tk.Label(left_frame, text="Date of Birth(DOB)", bg='SkyBlue', width=15).place(x=40, y=530)
+   # Placing Entry components of Tartu teacher form
+   e1 = tk.Entry(left_frame, width=21,bg='SkyBlue', textvariable=tname1)
+   e1.place(x=180, y=390)
+   e2 = tk.Entry(left_frame, width=21, bg='SkyBlue',textvariable=tfamily1)
+   e2.place(x=180, y=425)
+   e3 = tk.Entry(left_frame, width=21,bg='SkyBlue', textvariable=temail1)
+   e3.place(x=180, y=460)
+   OptionMenu(left_frame, tgender1, 'Male', "Female","Other").place(x=180, y=495, width=130, height=20)
+   global  tdob
+   tdob = DateEntry(left_frame, font=("Arial", 12), width=11)
+   tdob.place(x=180, y=530)
+
+   # Function to add TARTU teachers
+   def save_teacher():
+       global tname, tfamily, temail, tgender, tDOB
+       tname = tname1.get()
+       tfamily = tfamily1.get()
+       temail = temail1.get()
+       tgender = tgender1.get()
+       tDOB = tdob.get_date()
+       a = tname[:1]
+       b = tfamily[:1]
+       if not tname or not tfamily or not temail or not tgender or not tDOB:
+           mb.showerror('Error!', "Please enter all the details!")
+
+       elif a.isnumeric() == True or a == " " or b.isnumeric() == True or b == " ":
+           mb.showerror('Error!',
+                        "Please enter valid Name and Family!\n inserted Name and Family should not start with space or number")
+       else:
+           try:
+               tname = tname.rstrip().capitalize()
+               tfamily = tfamily.rstrip().capitalize()
+               t1 = teacher(tname, tfamily, temail, tgender, tDOB)
+               t1.teacher_register(tname, tfamily, temail, tgender, tDOB)
+               mb.showinfo('Record inserted', f"Record of {tname} is added")
+               reset_fields()
+               display_records()
+           except:
+               mb.showerror('Wrong type', 'The name and family should start with string')
+
+   # Place the buttons in the left frame of Tartu teacher form
+   tk.Button(left_frame, bg='SkyBlue',text='Delete Record', command=remove_record, width=18).place(x=30, y=650)
+   tk.Button(left_frame,bg='SkyBlue', text='Clear Fields', command=reset_fields, width=18).place(x=30, y=610)
+   tk.Button(left_frame, bg='SkyBlue',text='View Record', command=display_records, width=18).place(x=190, y=610)
+   tk.Button(left_frame,bg='SkyBlue', text='Clear Record', command=reset_form, width=18).place(x=190, y=650)
+   tk.Button(left_frame, bg='SkyBlue',text='Submit and Add Record', command=save_teacher, width=25).place(x=90, y=570)
+   tk.Button(left_frame,bg='SkyBlue',text='Exit', command=teacherui.destroy,width=18).place(x=110, y=685)
+
+   # Placing components in the right frameof Tartu teacher form
+   Label(right_frame, text='Teachers Records', font='Arial', bg='Blue', fg='LightCyan').pack(side=TOP, fill=X)
+   global ttree
+   ttree = ttk.Treeview(right_frame, height=100, selectmode=BROWSE,
+                       columns=('teacher ID', "Name", "Family", "Email Addr", "Gender", "Date of Birth"))
+
+   X_scroller = Scrollbar(ttree, orient=HORIZONTAL, command=ttree.xview)
+   Y_scroller = Scrollbar(ttree, orient=VERTICAL, command=ttree.yview)
+   X_scroller.pack(side=BOTTOM, fill=X)
+   Y_scroller.pack(side=RIGHT, fill=Y)
+   ttree.config(yscrollcommand=Y_scroller.set, xscrollcommand=X_scroller.set)
+
+   ttree.heading('teacher ID', text='ID', anchor=CENTER)
+   ttree.heading('Name', text='Name', anchor=CENTER)
+   ttree.heading('Family', text='Family', anchor=CENTER)
+   ttree.heading('Email Addr', text='Email Addr', anchor=CENTER)
+   ttree.heading('Gender', text='Gender', anchor=CENTER)
+   ttree.heading('Date of Birth', text='DOB', anchor=CENTER)
+   ttree.column('#0', width=0, stretch=NO)
+   ttree.column('#1', width=40, stretch=NO)
+   ttree.column('#2', width=120, stretch=NO)
+   ttree.column('#3', width=180, stretch=NO)
+   ttree.column('#4', width=200, stretch=NO)
+   ttree.column('#5', width=70, stretch=NO)
+   ttree.column('#6', width=80, stretch=NO)
+   ttree.place(y=30, relwidth=1, relheight=0.956, relx=0)
+   teacherui.update()
+   teacherui.mainloop()
+
+
+
+def subject_win():
+   subjectui= Toplevel(tatrtu_win)
+   # Initializing the GUI window for student form of TARTU
+   subjectui.title('Subject Offering')
+   subjectui.geometry('1000x750')
+   subjectui.resizable(0, 0)
+
+   # Creating the variables
+   headlabelfont = ("Calibri", 15, 'bold')
+   labelfont = ('Calibri', 14)
+   entryfont = ('Calibri', 14)
+
+   # Connecting to the Database where all information will be stored
+   connector = sqlite3.connect('projectdatabase.db')
+   cursor = connector.cursor()
+
+   # Creating the background and foreground color variables that goes well with Tartu color box
+   lf_bg = 'SteelBlue'
+
+   # Creating the StringVar variables
+   global sjname1,ects_scale1,teacheeer_id1,semester_year1
+   sjname1 = StringVar()
+   ects_scale1 = StringVar()
+   teacheeer_id1 = StringVar()
+   semester_year1 = StringVar()
+   # Placing the components in the main window
+   Label(subjectui, text="TARTU ADMISSION OFFICE/SUBJECTS", font='Arial', bg='SkyBlue').pack(side=TOP, fill=X)
+   left_frame = Frame(subjectui, bg=lf_bg)
+   left_frame.place(x=0, y=30, height=720, width=400)
+   right_frame = Frame(subjectui, bg="gray")
+   right_frame.place(x=400, y=30, height=270, width=600)
+   right_frame_down = Frame(subjectui, bg="gray")
+   right_frame_down.place(x=400, y=310, height=449, width=600)
+
+   # Create a bachground of Tartu
+   sbg = PhotoImage(file="sub_t.png")
+   canvas2 = Canvas(left_frame, width=400, height=1000)
+   canvas2.place(x=0, y=0)
+   canvas2.create_image(0, 0, image=sbg, anchor="nw")
+
+   # function to display records of TARTU students
+   def display_records():
+       sjtree.delete(*sjtree.get_children())
+       data= subject.showsubjectinfo()
+       for records in data:
+           sjtree.insert('', END, values=records)
+
+   # Create the reset function
+   def reset_fields():
+       global sjname1,ects_scale1,teacheeer_id1,semester_year1
+       for i in ['sjname1', 'ects_scale1', 'teacheeer_id1', 'semester_year1']:
+           exec(f"{i}.set('')")
+
+   def reset_form():
+       global sjtree
+       sjtree.delete(*sjtree.get_children())
+       reset_fields()
+
+   def show_teacher_records():
+        # global
+        showttree.delete(*showttree.get_children())
+        cursor.execute("select * from teacher")
+        data = cursor.fetchall()
+        for records in data:
+            showttree.insert('', END, values=records)
+
+   # Function to remove student
+   def remove_record():
+       if not sjtree.selection():
+           mb.showerror('Error!', 'Please select an item from the database')
+       else:
+           current_item = sjtree.focus()
+           values = sjtree.item(current_item)
+           selection = values["values"]
+           sjtree.delete(current_item)
+           connector.execute('DELETE FROM subject WHERE sj_id=%d' % selection[0])
+           connector.commit()
+           mb.showinfo('Done', 'The record is deleted successfully.')
+           display_records()
+
+
+   # Placing components in the left frame of Tartu Student form
+   tk.Label(left_frame, text="Subject Name", bg='white', width=15).place(x=60, y=425)
+   tk.Label(left_frame, text="ECTS_Scale", bg='white', width=15).place(x=60, y=460)
+   tk.Label(left_frame, text="Teacher ID", bg='white', width=15).place(x=60, y=495)
+   tk.Label(left_frame, text="Semester/Year", bg='white', width=15).place(x=60, y=530)
+   # Placing Entry components of Tartu Student form
+   e1 = tk.Entry(left_frame, width=21, textvariable=sjname1)
+   e1.place(x=200, y=425)
+   e2 = tk.Entry(left_frame, width=21, textvariable=ects_scale1)
+   e2.place(x=200, y=460)
+   e3 = tk.Entry(left_frame, width=21, textvariable=teacheeer_id1)
+   e3.place(x=200, y=495)
+   OptionMenu(left_frame, semester_year1, '1/2023', "2/2023","1/2024","2/2024","1/2025","2/2025").place(x=200, y=530, width=130, height=23)
+
+   # Function to add TARTU students
+   def save_subject():
+       global sjname1, ects_scale1, teacheeer_id1, semester_year1
+       sjname = sjname1.get()
+       ects_scale = ects_scale1.get()
+       teacheeer_id = teacheeer_id1.get()
+       semester_year = semester_year1.get()
+       a = sjname[:1]
+       l=teacher.listofteacherid()
+       if not sjname or not ects_scale or not teacheeer_id or not semester_year:
+           mb.showerror('Error!', "Please enter all the details!")
+
+       elif a.isnumeric() == True or a == " " or teacheeer_id.isnumeric() == False:
+           mb.showerror('Error!',
+                        "Please enter valid Subject Name or teacher ID!\n inserted Name should not start with space or number")
+
+       elif int(teacheeer_id) not in l:
+           mb.showerror('Error!',
+                        "Please enter valid Teacher ID!\n inserted ID is wrong or is not in database!")
+       else:
+           try:
+               sjname = sjname.rstrip().capitalize()
+               teacheeer_id=int(teacheeer_id)
+               s1 = subject(sjname, ects_scale, teacheeer_id, semester_year)
+               s1.subject_offerer(sjname, ects_scale, teacheeer_id, semester_year)
+               mb.showinfo('Record inserted', f"Record of {sjname} is added")
+               reset_fields()
+               display_records()
+           except:
+               mb.showerror('Wrong type', 'The subject name should start with string and the teacher id should be integer')
+
+   # Place the buttons in the left frame of Tartu Student form
+   ttk.Button(left_frame, text='Update Teachers List', command=show_teacher_records, width=18).place(x=130, y=370)
+   ttk.Button(left_frame, text='Delete Record', command=remove_record, width=18).place(x=50, y=650)
+   ttk.Button(left_frame, text='Clear Fields', command=reset_fields, width=18).place(x=50, y=610)
+   ttk.Button(left_frame, text='View Record', command=display_records, width=18).place(x=210, y=610)
+   ttk.Button(left_frame, text='Clear Record', command=reset_form, width=18).place(x=210, y=650)
+   ttk.Button(left_frame, text='Submit and Add Record', command=save_subject, width=25).place(x=110, y=570)
+   ttk.Button(left_frame,text='Exit', command=subjectui.destroy,width=18).place(x=130, y=685)
+
+   # Placing components in the right frameof Tartu Student form
+   Label(right_frame_down, text='SUBJECT Records', font='Arial', bg='DarkBlue', fg='LightCyan').pack(side=TOP, fill=X)
+   global sjtree
+   sjtree = ttk.Treeview(right_frame_down, height=100, selectmode=BROWSE,
+                       columns=('subject ID', "Name", "ECTS_Scale", "Semester/Year", "Teacher ID","Teacher name","Teacher family"))
+
+   X_scroller = Scrollbar(sjtree, orient=HORIZONTAL, command=sjtree.xview)
+   Y_scroller = Scrollbar(sjtree, orient=VERTICAL, command=sjtree.yview)
+   X_scroller.pack(side=BOTTOM, fill=X)
+   Y_scroller.pack(side=RIGHT, fill=Y)
+   sjtree.config(yscrollcommand=Y_scroller.set, xscrollcommand=X_scroller.set)
+
+   sjtree.heading('subject ID', text='Subject ID', anchor=CENTER)
+   sjtree.heading('Name', text='Subject Name', anchor=CENTER)
+   sjtree.heading('ECTS_Scale', text='ECTS_Scale', anchor=CENTER)
+   sjtree.heading('Semester/Year', text='Semester/Year', anchor=CENTER)
+   sjtree.heading('Teacher ID', text='Teacher ID', anchor=CENTER)
+   sjtree.heading('Teacher name', text='Teacher Name', anchor=CENTER)
+   sjtree.heading('Teacher family', text='Teacher Family', anchor=CENTER)
+   sjtree.column('#0', width=0, stretch=NO)
+   sjtree.column('#1', width=70, stretch=NO)
+   sjtree.column('#2', width=140, stretch=NO)
+   sjtree.column('#3', width=85, stretch=NO)
+   sjtree.column('#4', width=90, stretch=NO)
+   sjtree.column('#5', width=80, stretch=NO)
+   sjtree.column('#6', width=140, stretch=NO)
+   sjtree.column('#7', width=140, stretch=NO)
+   sjtree.place(y=36, relwidth=1, relheight=0.9, relx=0)
+
+   # Placing components in the right frame of Tartu Student form
+   Label(right_frame, text='TEACHER Records', font='Arial', bg='DarkBlue', fg='LightCyan').pack(side=TOP, fill=X)
+   showttree = ttk.Treeview(right_frame, height=100, selectmode=BROWSE,
+                       columns=('teacher ID', "Name", "Family", "Email Addr", "Gender", "Date of Birth"))
+   X_scroller = Scrollbar(showttree, orient=HORIZONTAL, command=showttree.xview)
+   Y_scroller = Scrollbar(showttree, orient=VERTICAL, command=showttree.yview)
+   X_scroller.pack(side=BOTTOM, fill=X)
+   Y_scroller.pack(side=RIGHT, fill=Y)
+   showttree.config(yscrollcommand=Y_scroller.set, xscrollcommand=X_scroller.set)
+
+   showttree.heading('teacher ID', text='ID', anchor=CENTER)
+   showttree.heading('Name', text='Name', anchor=CENTER)
+   showttree.heading('Family', text='Family', anchor=CENTER)
+   showttree.heading('Email Addr', text='Email Addr', anchor=CENTER)
+   showttree.heading('Gender', text='Gender', anchor=CENTER)
+   showttree.heading('Date of Birth', text='DOB', anchor=CENTER)
+   showttree.column('#0', width=0, stretch=NO)
+   showttree.column('#1', width=40, stretch=NO)
+   showttree.column('#2', width=120, stretch=NO)
+   showttree.column('#3', width=180, stretch=NO)
+   showttree.column('#4', width=200, stretch=NO)
+   showttree.column('#5', width=70, stretch=NO)
+   showttree.column('#6', width=80, stretch=NO)
+   showttree.place(y=30, relwidth=1, relheight=0.9, relx=0)
+
+   subjectui.update()
+   subjectui.mainloop()
+
+
+def subject_student_win():
+   subjectui= Toplevel(tatrtu_win)
+   # Initializing the GUI window for student form of TARTU
+   subjectui.title('Student-Subject Relation and Giving Score')
+   subjectui.geometry('1000x750')
+   subjectui.resizable(0, 0)
+
+   # Creating the variables
+   headlabelfont = ("Calibri", 15, 'bold')
+   labelfont = ('Calibri', 14)
+   entryfont = ('Calibri', 14)
+
+   # Connecting to the Database where all information will be stored
+   connector = sqlite3.connect('projectdatabase.db')
+   cursor = connector.cursor()
+
+   # Creating the background and foreground color variables that goes well with Tartu color box
+   lf_bg = 'SteelBlue'
+
+   # Creating the StringVar variables
+   global stid1,subjid1,subjid_score,student_list1,stscore
+   stid1 = StringVar()
+   subjid1= StringVar()
+   subjid_score = StringVar()
+   student_list1=StringVar()
+   stscore=StringVar()
+
+   # Create a bachground of Tartu
+   sbg = PhotoImage(file="p3.png")
+   canvas2 = Canvas(subjectui, width=1000, height=750)
+   canvas2.place(x=0, y=25)
+   canvas2.create_image(0, 0, image=sbg, anchor="nw")
+
+   # Placing the components in the main window
+   Label(subjectui, text="TARTU ADMISSION OFFICE/STUDENT & SUBJECT & Mark", font='Arial', bg='SkyBlue').pack(side=TOP, fill=X)
+   right_frame = Frame(subjectui, bg="gray")
+   right_frame.place(x=540, y=155, height=290, width=450)
+   down_frame = Frame(subjectui, bg="gray")
+   down_frame.place(x=10, y=470, height=275, width=980)
+
+   # Placing components in the right frame of Tartu Student form
+   tk.Label(subjectui, text="Student ID", bg='white', width=11).place(x=540, y=45)
+   tk.Label(subjectui, text="Subject ID", bg='white', width=11).place(x=540, y=75)
+   tk.Label(subjectui, text="Subject ID", bg='white', width=15).place(x=10, y=352)
+   tk.Label(subjectui, text="Select Student:", bg='white', width=15).place(x=10, y=410)
+   tk.Label(subjectui, text="Score:", bg='white', width=15).place(x=10, y=440)
+
+   # Placing Entry components of Tartu Student form
+   e1 = tk.Entry(subjectui, width=10, textvariable=stid1)
+   e1.place(x=630, y=45)
+   e2 = tk.Entry(subjectui, width=10, textvariable=subjid1)
+   e2.place(x=630, y=75)
+   e3 = tk.Entry(subjectui, width=10, bg="skyblue", textvariable=subjid_score)
+   e3.place(x=130, y=353)
+   e4 = tk.Entry(subjectui, width=10, bg="skyblue", textvariable=stscore)
+   e4.place(x=130, y=440)
+
+   # function to display records of TARTU students
+   def display_records():
+       student_subjecttree.delete(*student_subjecttree.get_children())
+       data= subject_student.showsubject_studentinfo()
+       for records in data:
+           student_subjecttree.insert('', END, values=records)
+
+       # function to display records of TARTU students
+
+   def display_records_downframe(final_subjid_toshow):
+       stuscoretree.delete(*stuscoretree.get_children())
+       data = subject_student.showsubject_student_thesameclass(final_subjid_toshow)
+       for records in data:
+           stuscoretree.insert('', END, values=records)
+
+   # Create the reset function
+   def reset_fields():
+       global stid1,subjid1,student_list1, stscore
+       for i in ['stid1', 'subjid1', 'student_list1','stscore']:
+           exec(f"{i}.set('')")
+
+   def reset_form():
+       global student_subjecttree
+       student_subjecttree.delete(*student_subjecttree.get_children())
+       reset_fields()
+
+   # Function to remove course taken up
+   def remove_record():
+       if not student_subjecttree.selection():
+           mb.showerror('Error!', 'Please select an item from the database')
+       else:
+           current_item = student_subjecttree.focus()
+           values = student_subjecttree.item(current_item)
+           selection = values["values"]
+           student_subjecttree.delete(current_item)
+           connector.execute('DELETE FROM subject_student WHERE stsj_id=%d' % selection[0])
+           connector.commit()
+           mb.showinfo('Done', 'The record is deleted successfully.')
+           display_records()
+
+   @staticmethod
+   def show_stu_subj():
+       global stuinfo,subjinfo
+       stuinfo=stid1.get()
+       subjinfo= subjid1.get()
+       a=stuinfo[:1]
+       b=subjinfo[:1]
+       stlist=student.listofstudentid()
+       sublist=subject.listofsubjectid()
+       if not stuinfo or not subjinfo:
+           mb.showerror('Error!',"Please enter Both Student ID and Subject ID!")
+
+       elif a == " " or b== " " or stuinfo.isnumeric() == False or subjinfo.isnumeric() == False:
+           mb.showerror('Error!',
+                        "Please enter valid Subject ID or Student ID!\n inserted IDs should not start with space or include any string")
+
+       elif int(stuinfo) not in stlist or int(subjinfo) not in sublist:
+           mb.showerror('Error!',
+                        "Please enter valid Student or Subject IDs!\n inserted IDs are wrong or are not in database!")
+       else:
+           try:
+               stuinfo=int(stuinfo)
+               global st11
+               st11=student.showstudentinfo2(stuinfo)
+               st12 = f"{st11[0][0]}  {st11[0][1]} "
+               subjinfo = int(subjinfo)
+               global sbj
+               sbj=subject.showsubject_teacherinfo(subjinfo)
+               sbj1=f"{sbj[0][0]}  By  {sbj[0][1]} {sbj[0][2]}"
+               tk.Label(subjectui, text=st12, bg='white', width=30).place(x=775, y=45)
+               tk.Label(subjectui, text=sbj1, bg='white', width=30).place(x=775, y=75)
+               return True
+           except:
+               mb.showerror('Wrong type', 'The subject or Student IDs should not start with string and should be integer')
+
+   def enroll():
+       check1= show_stu_subj()
+       if check1== True:
+           stusubj1 = subject_student(stuinfo, subjinfo,"not given")
+           stusubj1.takecourse(stuinfo,subjinfo)
+           mb.showinfo('Record successfully inserted', f"{st11[0][0]} {st11[0][1]} is enrolled in {sbj[0][0]} calss offered By teacher {sbj[0][1]} {sbj[0][2]}.")
+           reset_fields()
+           display_records()
+       else:
+           mb.showerror('Wrong type', 'The subject or Student IDs should not start with string and should be integer')
+
+   def optionmenu11(students_list,sbj_score1):
+       OptionMenu(subjectui, student_list1, *students_list).place(x=130, y=410, width=152, height=23)
+       tk.Label(subjectui, text=sbj_score1, bg='skyblue', width=35).place(x=130, y=382)
+
+   def View_Students_list():
+       optionmenu11(" "," ")
+       subjscoreinfo = subjid_score.get()
+       a = subjscoreinfo[:1]
+       sublist = subject.listofsubjectid()
+       if not subjscoreinfo:
+           mb.showerror('Error!', "Please enter Subject ID!")
+
+       elif a == " " or subjscoreinfo.isnumeric() == False :
+           mb.showerror('Error!',
+                        "Please enter valid Subject ID!\n inserted ID should not start with space or include any string")
+
+       elif int(subjscoreinfo) not in sublist:
+           mb.showerror('Error!',
+                        "Please enter valid Subject ID!\n inserted ID is wrong or is not in database!")
+       else:
+           try:
+               subjscoreinfo = int(subjscoreinfo)
+               global sbj_score,sbj_score1,subjscoreinfo_final
+               subjscoreinfo_final=subjscoreinfo
+               sbj_score = subject.showsubject_teacherinfo(subjscoreinfo)
+               sbj_score1 = f"Class: {sbj_score[0][0]}  By  {sbj_score[0][1]} {sbj_score[0][2]}"
+               listofstudentforscore = subject_student.show_student_of_subject_score(subjscoreinfo)
+               if listofstudentforscore == []:
+                   students_list = ["Empty"]
+                   mb.showerror('Error!',
+                                "There inserted Subject ID(Class) is Empty without any Student")
+               else:
+                   students_list = []
+                   for i in range(len(listofstudentforscore)):
+                       students_list.append(f"{listofstudentforscore[i][0]} {listofstudentforscore[i][1]} {listofstudentforscore[i][2]}")
+               optionmenu11(students_list, sbj_score1)
+               display_records_downframe(subjscoreinfo)
+               return True
+           except:
+               mb.showerror('Wrong type',
+                            'The subject ID should not start with string and should be integer')
+
+
+   # Function to mark TARTU students
+   def save_score():
+       final_subjid = subjscoreinfo_final
+       final_score = stscore.get()
+       studentidgetfromoption = student_list1.get()
+       a = final_score[:1]
+       if not final_subjid or not final_score or not studentidgetfromoption:
+           mb.showerror('Error!', "Please enter all the Inputs!")
+       elif a.isnumeric() == False or a == " ":
+           mb.showerror('Error!',
+                        "Please enter valid Score!\n inserted Score should not start with space or includ any String")
+       else:
+           try:
+               studentidwholeinfo = studentidgetfromoption.split(" ")
+               final1_studentid = studentidwholeinfo[0]
+               student_name_forscore = f"{studentidwholeinfo[1]} {studentidwholeinfo[2]}"
+               final_score2 = int(final_score)
+               subject_student.savemark(final1_studentid,final_subjid,final_score2)
+               mb.showinfo('Record inserted', f"the Score of {student_name_forscore} is given")
+               reset_fields()
+               display_records_downframe(final_subjid)
+           except:
+               mb.showerror('Wrong type',
+                            'The subject ID should be integer, Selected student should be in the class, and the score should be integer')
+
+   # Place the buttons in the right frame for taking courses of Tartu Student form
+   b1=ttk.Button(subjectui, text='Check\n Student\n& Subject', command=show_stu_subj, width=9)
+   b1.place(x=700, y=42,height=55)
+   ttk.Button(subjectui, text='ENROLL', command=enroll, width=18).place(x=620, y=120)
+   ttk.Button(subjectui, text='View Students list', command=View_Students_list, width=17).place(x=10, y=380)
+   ttk.Button(subjectui, text='Submit/Add Scores', command=save_score, width=25).place(x=240, y=440)
+   ttk.Button(subjectui,text='Exit', command=subjectui.destroy,width=18).place(x=380, y=350)
+   ttk.Button(subjectui, text='Delete Record', command=remove_record, width=18).place(x=760, y=120)
+
+   # Placing components in the right frame of Tartu Student form
+   Label(right_frame, text="List of Student's Subjects", font='Arial', bg='DarkBlue', fg='LightCyan').pack(side=TOP, fill=X)
+   student_subjecttree = ttk.Treeview(right_frame, height=100, selectmode=BROWSE,
+                       columns=('subj/stud ID', "Student Name", "Student Family", "Semester/Year", "Subject","Score", "ECTS-Scale","Teacher Name", "Teacher Family"))
+   X_scroller = Scrollbar(student_subjecttree, orient=HORIZONTAL, command=student_subjecttree.xview)
+   Y_scroller = Scrollbar(student_subjecttree, orient=VERTICAL, command=student_subjecttree.yview)
+   X_scroller.pack(side=BOTTOM, fill=X)
+   Y_scroller.pack(side=RIGHT, fill=Y)
+   student_subjecttree.config(yscrollcommand=Y_scroller.set, xscrollcommand=X_scroller.set)
+   student_subjecttree.heading('subj/stud ID', text='subj/stud ID', anchor=CENTER)
+   student_subjecttree.heading('Student Name', text='Student Name', anchor=CENTER)
+   student_subjecttree.heading('Student Family', text='Student Family', anchor=CENTER)
+   student_subjecttree.heading('Semester/Year', text='Semester/Year', anchor=CENTER)
+   student_subjecttree.heading('Subject', text='Subject', anchor=CENTER)
+   student_subjecttree.heading('Score', text='Score', anchor=CENTER)
+   student_subjecttree.heading('ECTS-Scale', text='ECTS-Scale', anchor=CENTER)
+   student_subjecttree.heading('Teacher Name', text='Teacher Name', anchor=CENTER)
+   student_subjecttree.heading('Teacher Family', text='Teacher Family', anchor=CENTER)
+   student_subjecttree.column('#0', width=0, stretch=NO)
+   student_subjecttree.column('#1', width=75, stretch=NO)
+   student_subjecttree.column('#2', width=100, stretch=NO)
+   student_subjecttree.column('#3', width=100, stretch=NO)
+   student_subjecttree.column('#4', width=85, stretch=NO)
+   student_subjecttree.column('#5', width=110, stretch=NO)
+   student_subjecttree.column('#6', width=60, stretch=NO)
+   student_subjecttree.column('#7', width=100, stretch=NO)
+   student_subjecttree.column('#8', width=100, stretch=NO)
+   student_subjecttree.place(y=30, relwidth=1, relheight=0.9, relx=0)
+
+   # Placing components in the down frame of Tartu Student form
+   Label(down_frame, text='Score Records', font='Arial', bg='DarkBlue', fg='LightCyan').pack(side=TOP, fill=X)
+   stuscoretree = ttk.Treeview(down_frame, height=100, selectmode=BROWSE,
+                       columns=('student ID', "Student Name", "Student Family", "Semester/Year", "Subject","Score", "ECTS-Scale","Teacher Name", "Teacher Family"))
+   X_scroller = Scrollbar(down_frame, orient=HORIZONTAL, command=stuscoretree.xview)
+   Y_scroller = Scrollbar(down_frame, orient=VERTICAL, command=stuscoretree.yview)
+   X_scroller.pack(side=BOTTOM, fill=X)
+   Y_scroller.pack(side=RIGHT, fill=Y)
+   stuscoretree.config(yscrollcommand=Y_scroller.set, xscrollcommand=X_scroller.set)
+   stuscoretree.heading('student ID', text='student ID', anchor=CENTER)
+   stuscoretree.heading('Student Name', text='Student Name', anchor=CENTER)
+   stuscoretree.heading('Student Family', text='Student Family', anchor=CENTER)
+   stuscoretree.heading('Semester/Year', text='Semester/Year', anchor=CENTER)
+   stuscoretree.heading('Subject', text='Subject', anchor=CENTER)
+   stuscoretree.heading('Score', text='Score', anchor=CENTER)
+   stuscoretree.heading('ECTS-Scale', text='ECTS-Scale', anchor=CENTER)
+   stuscoretree.heading('Teacher Name', text='Teacher Name', anchor=CENTER)
+   stuscoretree.heading('Teacher Family', text='Teacher Family', anchor=CENTER)
+   stuscoretree.column('#0', width=0, stretch=NO)
+   stuscoretree.column('#1', width=75, stretch=NO)
+   stuscoretree.column('#2', width=100, stretch=NO)
+   stuscoretree.column('#3', width=100, stretch=NO)
+   stuscoretree.column('#4', width=85, stretch=NO)
+   stuscoretree.column('#5', width=110, stretch=NO)
+   stuscoretree.column('#6', width=60, stretch=NO)
+   stuscoretree.column('#7', width=100, stretch=NO)
+   stuscoretree.column('#8', width=100, stretch=NO)
+   stuscoretree.place(y=30, relwidth=1, relheight=0.9, relx=0)
+
+   subjectui.update()
+   subjectui.mainloop()
+
+
+def report_win():
+   reportui= Toplevel(tatrtu_win)
+   # Initializing the GUI window for student form of TARTU
+   reportui.title('Student Registering')
+   reportui.geometry('1000x750')
+   reportui.resizable(0, 0)
+
+   # Connecting to the Database where all information will be stored
+   connector = sqlite3.connect('projectdatabase.db')
+   cursor = connector.cursor()
+
+   # Creating the background and foreground color variables that goes well with Tartu color box
+   lf_bg = 'SteelBlue'
+
+   global studentidfortranscript
+   studentidfortranscript = StringVar()
+
+   # Create a bachground of Tartu
+   bg = PhotoImage(file="image1.png")
+   canvas1 = Canvas(reportui, width=1000, height=1000)
+   canvas1.place(x=0, y=0)
+   canvas1.create_image(0, 0, image=bg, anchor="nw")
+
+   # Placing the components in the main window
+   down_frame = Frame(reportui, bg="gray")
+   down_frame.place(x=40, y=320, height=260, width=460)
+
+   def studentreport():
+       students=student.showstudent()
+       l2 = []
+       for j in range(len(students)):
+           l = []
+           for i in range(6):
+               l.append(students[j][i])
+               # print(l)
+           l2.append(l)
+
+       df = pd.DataFrame(l2, columns=['Student ID', 'Name', 'Family', 'Email','Gender','Date of Birth'])
+       df.to_excel('Students Report.xlsx', index=False, sheet_name='Students')
+       mb.showinfo('Successfully downloaded', f"Students Report is downloaded and The Type of report file is Excel")
+
+   def teacherreport():
+       teachers=teacher.showteacher()
+       l2 = []
+       for j in range(len(teachers)):
+           l = []
+           for i in range(6):
+               l.append(teachers[j][i])
+               # print(l)
+           l2.append(l)
+
+       df = pd.DataFrame(l2, columns=['Teacher ID', 'Name', 'Family', 'Email','Gender','Date of Birth'])
+       df.to_excel('Teachers Report.xlsx', index=False, sheet_name='Teachers')
+       mb.showinfo('Successfully downloaded', f"Teachers Report is downloaded and The Type of report file is Excel")
+
+   def subjectreport():
+       subjects=subject.showsubjectinfo()
+       l2 = []
+       for j in range(len(subjects)):
+           l = []
+           for i in range(7):
+               l.append(subjects[j][i])
+           l2.append(l)
+
+       df = pd.DataFrame(l2, columns=['subject ID', "Name", "ECTS_Scale", "Semester/Year", "Teacher ID","Teacher name","Teacher family"])
+       df.to_excel('Subjects Report.xlsx', index=False, sheet_name='subjects')
+       mb.showinfo('Successfully downloaded', f"Subjects Report is downloaded and The Type of report file is Excel")
+
+       # function to display records of TARTU students
+   @staticmethod
+   def display_transcript_records(stid_Treport):
+       stutranscript.delete(*stutranscript.get_children())
+       data = subject_student.showsubject_student_transcript(stid_Treport)
+       for records in data:
+           stutranscript.insert('', END, values=records)
+
+   # Placing components
+   tk.Label(reportui, text="Student ID", bg='white', width=15).place(x=40, y=240)
+   e1 = tk.Entry(reportui, width=21,bg='skyblue', textvariable=studentidfortranscript)
+   e1.place(x=180, y=240)
+   @staticmethod
+   def student_transcriptreport():
+       global stid_Treport
+       stid_Treport = studentidfortranscript.get()
+       a = stid_Treport[:1]
+       stlist = student.listofstudentid()
+       if not stid_Treport:
+           mb.showerror('Error!', "Please enter Student ID!")
+       elif a.isnumeric() == False or a == " " :
+           mb.showerror('Error!',
+                        "Please enter valid Student ID!\n inserted ID should not start with space or include string")
+
+       elif int(stid_Treport) not in stlist:
+           mb.showerror('Error!',
+                        "Please enter valid Student ID!\n inserted ID is wrong or is not in database!")
+       else:
+           try:
+               stid_Treport = int(stid_Treport)
+               # mb.showinfo('Successful', f"Record of {stname} is added")
+               display_transcript_records(stid_Treport)
+               studentidfortranscript.set('')
+           except:
+               mb.showerror('Wrong type', 'The Student ID should not start with string')
+   def student_transcriptreport_excel():
+       student_transcriptreport()
+       data = subject_student.showsubject_student_transcript(stid_Treport)
+       l2 = []
+       for j in range(len(data)):
+           l = []
+           for i in range(9):
+               l.append(data[j][i])
+           l2.append(l)
+
+       df = pd.DataFrame(l2, columns=['student ID', "Student Name", "Student Family", "Semester/Year", "Subject","Score", "ECTS-Scale","Teacher Name", "Teacher Family"])
+       df.to_excel(f'Transcript of {l2[0][1]}.xlsx', index=False, sheet_name='Transcript')
+       mb.showinfo('Successfully downloaded', f"Transcript Report is downloaded and The Type of report file is Excel")
+
+   # Place the buttons in the left frame of Tartu Student form
+   ttk.Button(reportui, text='Subjects List(Excel)', command=subjectreport, width=25).place(x=40, y=120)
+   ttk.Button(reportui, text='Teachers List(Excel)', command=teacherreport, width=25).place(x=40, y=160)
+   ttk.Button(reportui, text='Students List(Excel)', command=studentreport, width=25).place(x=40, y=200)
+   ttk.Button(reportui, text='Student Transcript', command=student_transcriptreport, width=25).place(x=40, y=280)
+   ttk.Button(reportui, text='Student Transcript(Excel)', command=student_transcriptreport_excel, width=25).place(x=40, y=600)
+   ttk.Button(reportui,text='Exit', command=reportui.destroy,width=18).place(x=40, y=690)
+
+   # Placing components in the down frame of Tartu Student form
+   Label(down_frame, text=f'Transcript Records', font='Arial', bg='DarkBlue', fg='LightCyan').pack(side=TOP, fill=X)
+   stutranscript = ttk.Treeview(down_frame, height=100, selectmode=BROWSE,
+                       columns=('student ID', "Student Name", "Student Family", "Semester/Year", "Subject","Score", "ECTS-Scale","Teacher Name", "Teacher Family"))
+   X_scroller = Scrollbar(down_frame, orient=HORIZONTAL, command=stutranscript.xview)
+   Y_scroller = Scrollbar(down_frame, orient=VERTICAL, command=stutranscript.yview)
+   X_scroller.pack(side=BOTTOM, fill=X)
+   Y_scroller.pack(side=RIGHT, fill=Y)
+   stutranscript.config(yscrollcommand=Y_scroller.set, xscrollcommand=X_scroller.set)
+   stutranscript.heading('student ID', text='student ID', anchor=CENTER)
+   stutranscript.heading('Student Name', text='Student Name', anchor=CENTER)
+   stutranscript.heading('Student Family', text='Student Family', anchor=CENTER)
+   stutranscript.heading('Semester/Year', text='Semester/Year', anchor=CENTER)
+   stutranscript.heading('Subject', text='Subject', anchor=CENTER)
+   stutranscript.heading('Score', text='Score', anchor=CENTER)
+   stutranscript.heading('ECTS-Scale', text='ECTS-Scale', anchor=CENTER)
+   stutranscript.heading('Teacher Name', text='Teacher Name', anchor=CENTER)
+   stutranscript.heading('Teacher Family', text='Teacher Family', anchor=CENTER)
+   stutranscript.column('#0', width=0, stretch=NO)
+   stutranscript.column('#1', width=75, stretch=NO)
+   stutranscript.column('#2', width=100, stretch=NO)
+   stutranscript.column('#3', width=100, stretch=NO)
+   stutranscript.column('#4', width=85, stretch=NO)
+   stutranscript.column('#5', width=110, stretch=NO)
+   stutranscript.column('#6', width=60, stretch=NO)
+   stutranscript.column('#7', width=100, stretch=NO)
+   stutranscript.column('#8', width=100, stretch=NO)
+   stutranscript.place(y=30, relwidth=1, relheight=0.9, relx=0)
+
+   reportui.update()
+   reportui.mainloop()
+
+
+
+def About_Milad_Torabi():
+    aboutmildatorabiui = Toplevel(tatrtu_win)
+    # Initializing the GUI window for student form of TARTU
+    aboutmildatorabiui.title('Milad Torabi')
+    aboutmildatorabiui.geometry('1100x750')
+    aboutmildatorabiui.resizable(0, 0)
+    # Create Milad Torabi CV
+    bg = PhotoImage(file="MiladTorabi.png")
+    canvas1 = Canvas(aboutmildatorabiui, width=1100, height=750)
+    canvas1.place(x=0, y=0)
+    canvas1.create_image(0, 0, image=bg, anchor="nw")
+    aboutmildatorabiui.update()
+    aboutmildatorabiui.mainloop()
+
+
+#Create a button to open a New Window
+button1=ttk.Button(tatrtu_win, text="About!",command=About_Milad_Torabi).place(x=20,y=260)
+button2=ttk.Button(tatrtu_win, text=" All  Reports " ,command=report_win).place(x=20,y=310)
+button3=ttk.Button(tatrtu_win, text="New Subject Form" ,command=subject_win).place(x=20,y=360)
+button4=ttk.Button(tatrtu_win, text="Adding Teeacher Form" ,command=teacher_win).place(x=20,y=410)
+button5=ttk.Button(tatrtu_win, text="Student Registration Form", command=student_win).place(x=20,y=460)
+button6=ttk.Button(tatrtu_win, text="Subject-Student/Giving Score " ,command=subject_student_win).place(x=20,y=510)
+
+tatrtu_win.mainloop()
