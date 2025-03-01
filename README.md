@@ -32,8 +32,8 @@ Additionally, the system supports **Excel file export**, enabling staff to gener
 
 ---
 
-## **Future Enhancements**  
-✅ Add a more advanced GUI framework (e.g., PyQt or Kivy) \t
+## **Future Enhancements:**  
+✅ ** Add a more advanced GUI framework (e.g., PyQt or Kivy) **
 ✅ Integrate a cloud-based database for scalability
 ✅ Implement user authentication for security
 ✅ Implement machine learning algorithm for analyzing the entry data
