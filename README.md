@@ -32,6 +32,16 @@ Additionally, the system supports **Excel file export**, enabling staff to gener
 
 ---
 
+## 📚 **Project Structure**
+📂 Project Root  
+├── [📘 Report_MLP.pdf](Report_MLP.pdf)  
+├── [📄 README.md (This File)](README.md)    
+├── [📊 AGE_REGRESSION.csv (Dataset)](AGE_PREDICTION.csv)  
+├── [📜 Functions_MLP.py (Functions and Utility Codes)](Functions_MLP.py)  
+└── [📒 run_MLP.ipynb (Jupyter Notebook for Training and Running the Model)](run_MLP.ipynb)  
+
+---
+
 ## **Future Enhancements:**  
 
 ✅ Add a more advanced GUI framework (e.g., PyQt or Kivy)  
