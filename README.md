@@ -32,8 +32,13 @@ Additionally, the system supports **Excel file export**, enabling staff to gener
 
 ---
 
-## **Installation & Setup**  
-1. **Clone the repository**  
-   ```bash
-   git clone https://github.com/miladtorabi65/Tartu-project10.git
-   cd Tartu-project10
+## **Future Enhancements**  
+✅ Add a more advanced GUI framework (e.g., PyQt or Kivy)
+✅ Integrate a cloud-based database for scalability
+✅ Implement user authentication for security
+✅ Implement machine learning algorithm for analyzing the entry data
+
+---
+
+## **Author**
+Milad Torabi | 2022 
